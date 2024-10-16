@@ -1,0 +1,29 @@
+name: Test coverage
+
+on:
+  push:
+    branches: 
+      - main 
+      - develop
+      - feature/*
+      - test/*
+  workflow_dispatch:  
+
+jobs:
+  test_user:
+    name: Test User Service  
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ 3.9 ]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install pipenv
+        run: pip install pipenv
+        working-directory: ./user
+      - name: Install dependencies
+        run: pipenv install --dev
+        working-directory: ./user
+      - name: Run unit tests
+        run: pipenv run pytest --cov=src -v -s --cov-fail-under=70
+        working-directory: ./user

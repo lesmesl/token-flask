@@ -1,0 +1,122 @@
+---
+# Deployment para micro-user
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: micro-user-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: micro-user
+  template:
+    metadata:
+      labels:
+        app: micro-user
+    spec:
+      containers:
+        - name: micro-user-container
+          image: us-central1-docker.pkg.dev/misw-s202414-proyecto-grupo18/misw-pg18-repo/micro-user:1.3
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 2000
+          env:
+            - name: VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: VERSION
+            - name: FLASK_APP
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: FLASK_APP
+            - name: FLASK_DEBUG
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: FLASK_DEBUG
+            - name: FLASK_ENV
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: FLASK_ENV
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: DB_PASSWORD
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: DB_NAME
+            - name: USERS_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: USERS_PATH
+            - name: SECRET_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: SECRET_TOKEN
+            - name: TRUE_NATIVE_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: TRUE_NATIVE_SERVER
+            - name: EMAIL_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: micros-secrets
+                  key: EMAIL_PATH
+---
+# BackendConfig micro-user
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: micro-user-config
+spec:
+  healthCheck:
+    checkIntervalSec: 30
+    port: 2000
+    type: HTTP
+    requestPath: /users/ping
+---
+# Service para micro-user
+apiVersion: v1
+kind: Service
+metadata:
+  name: micro-user-service
+  annotations:
+    cloud.google.com/backend-config: '{"default": "micro-user-config"}'
+spec:
+  selector:
+    app: micro-user
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 2000
+  type: NodePort
